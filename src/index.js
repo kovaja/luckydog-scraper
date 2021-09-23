@@ -1,11 +1,11 @@
+const express = require('express')
 const { log, createHtml } = require('./utils')
 const { processEvents, getReadableEvents, deleteEvents } = require('./eventsController')
-const express = require('express')
 const { sendEmail, initEmailService } = require('./email')
 
 require('dotenv').config()
 
-function getResponse (data) {
+function createResponse (data) {
   return JSON.stringify({
     date: new Date().toISOString(),
     data: data || {}
@@ -20,7 +20,7 @@ async function check (res) {
     sendEmail(message)
   }
 
-  res.send(getResponse({ sendNotification }))
+  res.send(createResponse({ sendNotification }))
 }
 
 function getEvents (res) {
@@ -29,11 +29,11 @@ function getEvents (res) {
 
 function deleteAll (res) {
   deleteEvents()
-  res.send(getResponse())
+  res.send(createResponse())
 }
 
 function status (res) {
-  res.send(getResponse())
+  res.send(createResponse())
 }
 
 function handle (handler) {
@@ -44,12 +44,10 @@ function handle (handler) {
       await handler(res)
     } catch (e) {
       log('Request handler failed', e)
-      res.status(500).send(getResponse({ message: 'Request has failed' }))
+      res.status(500).send(createResponse({ message: 'Request has failed' }))
     }
   }
 }
-
-// cron
 
 async function main () {
   initEmailService()
@@ -65,7 +63,6 @@ async function main () {
   app.listen(port, () => {
     log(`App listening at ${port}`)
   })
-
 }
 
 main()
