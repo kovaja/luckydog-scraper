@@ -1,6 +1,7 @@
 const { log, createHtml } = require('./utils')
 const { processEvents, getReadableEvents, deleteEvents } = require('./eventsController')
 const express = require('express')
+const { sendEmail, initEmailService } = require('./email')
 
 require('dotenv').config()
 
@@ -16,6 +17,7 @@ async function check (res) {
 
   if (sendNotification) {
     log('Send notification', message)
+    sendEmail(message)
   }
 
   res.send(getResponse({ sendNotification }))
@@ -47,7 +49,11 @@ function handle (handler) {
   }
 }
 
+// cron
+
 async function main () {
+  initEmailService()
+
   const app = express()
   const port = process.env.PORT
 
@@ -59,6 +65,7 @@ async function main () {
   app.listen(port, () => {
     log(`App listening at ${port}`)
   })
+
 }
 
 main()
