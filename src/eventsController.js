@@ -89,7 +89,7 @@ async function processEvents () {
   log(`There are ${newlyAddedEvents.length} new events`)
 
   if (newlyAddedEvents.length > 0) {
-    writeEvents(newlyAddedEvents)
+    writeEvents(getAvailableEvents(events))
   }
 
   return {
