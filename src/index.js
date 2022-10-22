@@ -30,8 +30,21 @@ function deleteAll (res) {
   res.send(createResponse())
 }
 
-function status (res) {
-  res.send(createResponse())
+function handleHome(req, res) {
+  res.send(`
+  <!DOCTYPE html>
+  <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>HTML 5 Boilerplate</title>
+    </head>
+    <body>
+      <div>Hello luckydog scraper</div>
+    </body>
+  </html>
+  `)
 }
 
 function handle (handler) {
@@ -53,7 +66,8 @@ async function main () {
   const app = express()
   const port = process.env.PORT
 
-  app.get('/', handle(status))
+
+  app.get('/', handleHome)
   app.get('/check', handle(_check))
   app.get('/events', handle(getEvents))
   app.get('/delete', handle(deleteAll))
