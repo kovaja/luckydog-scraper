@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
+    "build": "echo Hello Jakub",
     "publish": "git push heroku +master && heroku logs --tail -a luckydog-scraper"
   },
   "author": "kovaja",
