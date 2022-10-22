@@ -1,7 +1,8 @@
 const express = require('express')
 const { log, createHtml } = require('./utils')
-const { processEvents, getReadableEvents, deleteEvents } = require('./eventsController')
-const { sendEmail, initEmailService } = require('./email')
+const { getReadableEvents, deleteEvents } = require('./eventsController')
+const { initEmailService } = require('./email')
+const { check } = require('./check')
 
 require('dotenv').config()
 
@@ -12,15 +13,12 @@ function createResponse (data) {
   })
 }
 
-async function check (res) {
-  const { sendNotification, message } = await processEvents()
-
-  if (sendNotification) {
-    log('Send notification', message)
-    sendEmail(message)
-  }
-
-  res.send(createResponse({ sendNotification }))
+async function _check(res) {
+  res.send(
+    createResponse(
+      check({ shouldInitEmailService: false })
+    )
+  );
 }
 
 function getEvents (res) {
@@ -56,7 +54,7 @@ async function main () {
   const port = process.env.PORT
 
   app.get('/', handle(status))
-  app.get('/check', handle(check))
+  app.get('/check', handle(_check))
   app.get('/events', handle(getEvents))
   app.get('/delete', handle(deleteAll))
 

@@ -1,7 +1,6 @@
 const axios = require('axios')
-const path = require('path')
-const fs = require('fs')
 const { log } = require('./utils')
+const { readKnownEvents, writeEvents } = require('./db')
 
 function getUrl (date) {
   return `https://www.luckydog-vph.cz/wp-admin/admin-ajax.php?action=wpamelia_api&call=/events&dates[]=${date}&page=1&recurring=0`
@@ -24,29 +23,17 @@ async function getEvents () {
   }
 }
 
-function getFilePath () {
-  return path.resolve(__dirname, '../', 'events.json')
-}
-
 function getKnownEvents () {
-  try {
-    const filePath = getFilePath()
-    if (!fs.existsSync(filePath)) {
-      log('No events file')
+  return readKnownEvents()
+    .catch(e => {
+      log('Failed to read existing events', e)
       return []
-    }
-
-    const content = fs.readFileSync(filePath, 'utf-8')
-    return JSON.parse(content)
-  } catch (e) {
-    log('Failed to read existing events', e)
-    return []
-  }
+    });
 }
 
-function writeEvents (events) {
+async function writeEventsToDb (events) {
   try {
-    fs.writeFileSync(getFilePath(), JSON.stringify(events, null, 2), 'utf-8')
+    await writeEvents(JSON.stringify(events))
     log(`Events successfully written`)
   } catch (e) {
     log('Failed to write events', e)
@@ -83,13 +70,13 @@ function getNewEventsMessage (events) {
 
 async function processEvents () {
   const events = await getEvents()
-  const knownEvents = getKnownEvents()
+  const knownEvents = await getKnownEvents()
   const newlyAddedEvents = compareEvents(events, knownEvents)
 
   log(`There are ${newlyAddedEvents.length} new events`)
 
   if (newlyAddedEvents.length > 0) {
-    writeEvents(newlyAddedEvents)
+    await writeEventsToDb(newlyAddedEvents)
   }
 
   return {

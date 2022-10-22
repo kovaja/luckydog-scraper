@@ -1,4 +1,3 @@
-const { log } = require('./utils')
 const nodemailer = require('nodemailer')
 
 let transporter
@@ -11,13 +10,11 @@ function sendEmail (message) {
     text: message + '\n' + process.env.TARGET_EMAIL_URL
   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      log('Failed to send email', error);
-    } else {
-      log('Email sent:', info.response);
-    }
-  });
+  return new Promise((resolve, reject) => {
+    transporter.sendMail(mailOptions, function (error, info) {
+      return error ? reject(error) : resolve(info.response)
+    });
+  })
 }
 
 function initEmailService () {
