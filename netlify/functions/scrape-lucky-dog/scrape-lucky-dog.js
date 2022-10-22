@@ -1,7 +1,7 @@
-const { check } = require('../../src/check')
-const { log } = require('../../src/utils')
-
-exports.handler = async function () {
+// Docs on event and context https://docs.netlify.com/functions/build/#code-your-function-2
+const { check } = require('../../../src/check')
+const { log } = require('../../../src/utils')
+const handler = async (event) => {
   const start = new Date().getTime()
   let data = {}
 
@@ -10,7 +10,7 @@ exports.handler = async function () {
   } catch (e) {
     log('Netlify function failed', e);
     return {
-      statusCode: 400,
+      statusCode: 500,
       body: JSON.stringify({ error: e })
     }
   }
@@ -23,3 +23,5 @@ exports.handler = async function () {
     })
   }
 }
+
+module.exports = { handler }
