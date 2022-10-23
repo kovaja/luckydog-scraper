@@ -1,7 +1,6 @@
-// Docs on event and context https://docs.netlify.com/functions/build/#code-your-function-2
 const { check } = require('../../../src/check')
 const { log } = require('../../../src/utils')
-const handler = async (event) => {
+const handler = async () => {
   const start = new Date().getTime()
   let data = {}
 

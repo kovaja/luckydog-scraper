@@ -13,7 +13,7 @@ async function check ({ shouldInitEmailService = true } = {}) {
   if (sendNotification) {
     log('Send notification', message)
     try {
-      sentInfo = await sendEmail()
+      sentInfo = await sendEmail(message)
     } catch (e) {
       sentInfo = e
     }
