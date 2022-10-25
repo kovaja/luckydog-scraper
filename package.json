@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "build": "#",
-    "publish": "git push heroku +master && heroku logs --tail -a luckydog-scraper"
+    "publish": "netlify deploy --prod"
   },
   "author": "kovaja",
   "license": "ISC",
