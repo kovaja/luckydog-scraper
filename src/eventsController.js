@@ -25,10 +25,6 @@ async function getEvents () {
 
 function getKnownEvents () {
   return readKnownEvents()
-    .catch(e => {
-      log('Failed to read existing events', e)
-      return []
-    });
 }
 
 async function writeEventsToDb (events) {
@@ -48,9 +44,39 @@ function getEventIds (events) {
   return events.map(ev => ev.id)
 }
 
+// newEvents may contain same events as knownEvents, but with changed properties
+// we want to return an array where event.id is unique
+function getUniqueEvents(knownEvents, newEvents) {
+  const newEventsIds = getEventIds(newEvents)
+  const knownEventsWithoutNewEvents = knownEvents.filter(ev => newEventsIds.includes(ev.id))
+
+  return [ ...newEvents, ...knownEventsWithoutNewEvents ]
+}
+
+function getKnownEventById(knownEvents, id) {
+  return knownEvents.find(ev => ev.id === id)
+}
+
+function isChangedEvent(knownEvents, event) {
+  const eventWithSameId = getKnownEventById(knownEvents, event.id)
+
+  // if we don't know this event, it's new, return true
+  if (!eventWithSameId) {
+    return true
+  }
+
+  // capacity of that event has changed, return true
+  if (eventWithSameId.places !== event.places) {
+    return true
+  }
+
+  // it's the same event, return false
+  return false;
+}
+
 function compareEvents (newEvents, knownEvents) {
-  const knownIds = getEventIds(knownEvents)
-  return getAvailableEvents(newEvents).filter((ev) => !knownIds.includes(ev.id))
+  return getAvailableEvents(newEvents)
+    .filter((ev) => isChangedEvent(knownEvents, ev))
 }
 
 function getDate (event) {
@@ -74,14 +100,15 @@ async function processEvents () {
   const newlyAddedEvents = compareEvents(events, knownEvents)
 
   log(`There are ${newlyAddedEvents.length} new events`)
+  const availableEvents = getUniqueEvents(knownEvents, newlyAddedEvents)
 
   if (newlyAddedEvents.length > 0) {
-    await writeEventsToDb(newlyAddedEvents)
+    await writeEventsToDb(availableEvents)
   }
 
   return {
     sendNotification: newlyAddedEvents.length > 0,
-    message: getNewEventsMessage(newlyAddedEvents)
+    message: getNewEventsMessage(availableEvents)
   }
 }
 
