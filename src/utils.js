@@ -1,5 +1,6 @@
+const VERSION = '0.0.1'
 function log (...args) {
-  console.log('LUCKY_DOG_SCRAPER: ', ...args)
+  console.log(`LUCKY_DOG_SCRAPER[${VERSION}]: `, ...args)
 }
 
 function createHtml (content) {

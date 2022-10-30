@@ -2,6 +2,12 @@ const axios = require('axios')
 const { log } = require('./utils')
 const { readKnownEvents, writeEvents } = require('./db')
 
+const UNWANTED_EVENTS_NAMES = [
+  'Štěňátka a začátečníci',
+  'Středeční školička pro',
+  'Nosework s Ivetou'
+]
+
 function getUrl (date) {
   return `https://www.luckydog-vph.cz/wp-admin/admin-ajax.php?action=wpamelia_api&call=/events&dates[]=${date}&page=1&recurring=0`
 }
@@ -21,6 +27,14 @@ async function getEvents () {
     log('Field to load data', e)
     return []
   }
+}
+
+function removeUnwantedEvents (eventsFromLuckyDog) {
+  return eventsFromLuckyDog.filter((ev) => {
+    return UNWANTED_EVENTS_NAMES.every(
+      (unwantedPhrase) => !ev.name.includes(unwantedPhrase)
+    )
+  })
 }
 
 function getKnownEvents () {
@@ -48,7 +62,7 @@ function getEventIds (events) {
 // we want to return an array where event.id is unique
 function getUniqueEvents(knownEvents, newEvents) {
   const newEventsIds = getEventIds(newEvents)
-  const knownEventsWithoutNewEvents = knownEvents.filter(ev => newEventsIds.includes(ev.id))
+  const knownEventsWithoutNewEvents = knownEvents.filter(ev => !newEventsIds.includes(ev.id))
 
   return [ ...newEvents, ...knownEventsWithoutNewEvents ]
 }
@@ -59,7 +73,6 @@ function getKnownEventById(knownEvents, id) {
 
 function isChangedEvent(knownEvents, event) {
   const eventWithSameId = getKnownEventById(knownEvents, event.id)
-
   // if we don't know this event, it's new, return true
   if (!eventWithSameId) {
     return true
@@ -95,19 +108,26 @@ function getNewEventsMessage (events) {
 }
 
 async function processEvents () {
-  const events = await getEvents()
+  const eventsFromLuckyDog = await getEvents()
+  const events = removeUnwantedEvents(eventsFromLuckyDog)
   const knownEvents = await getKnownEvents()
-  const newlyAddedEvents = compareEvents(events, knownEvents)
+  const newlyAddedOrChangedEvents = compareEvents(events, knownEvents)
+  const availableEvents = getUniqueEvents(knownEvents, newlyAddedOrChangedEvents)
 
-  log(`There are ${newlyAddedEvents.length} new events`)
-  const availableEvents = getUniqueEvents(knownEvents, newlyAddedEvents)
+  const stats = {
+    receivedAfterFilter: events.length,
+    known: knownEvents.length,
+    newOrChanged: newlyAddedOrChangedEvents.length,
+    available: availableEvents.length
+  }
 
-  if (newlyAddedEvents.length > 0) {
+  log(JSON.stringify(stats))
+  if (newlyAddedOrChangedEvents.length > 0) {
     await writeEventsToDb(availableEvents)
   }
 
   return {
-    sendNotification: newlyAddedEvents.length > 0,
+    sendNotification: newlyAddedOrChangedEvents.length > 0,
     message: getNewEventsMessage(availableEvents)
   }
 }
