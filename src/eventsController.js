@@ -2,6 +2,7 @@ const axios = require('axios')
 const { log } = require('./utils')
 const { readKnownEvents, writeEvents } = require('./db')
 
+const DAY_MS = 24 * 60 * 60 * 1000
 const UNWANTED_EVENTS_NAMES = [
   'Štěňátka a začátečníci',
   'Středeční školička pro',
@@ -67,6 +68,26 @@ function getUniqueEvents(knownEvents, newEvents) {
   return [ ...newEvents, ...knownEventsWithoutNewEvents ]
 }
 
+function isInFuture({ periods }) {
+  const todayTs = new Date().getTime();
+
+  return periods?.some(p => {
+    const periodTS = new Date(p.periodStart).getTime()
+    if (isNaN(periodTS)) {
+      return true // keep the event when we fail to parse the period time
+    }
+
+    // add 24 hours to prevent issues with different timezones
+    return periodTS - todayTs + DAY_MS > 0
+  })
+}
+// filter out events, that are full or that are from the past
+function removeObsoleteEvents(availableEvents) {
+  return availableEvents
+    .filter(ev => ev.places > 0)
+    .filter(isInFuture)
+}
+
 function getKnownEventById(knownEvents, id) {
   return knownEvents.find(ev => ev.id === id)
 }
@@ -112,7 +133,8 @@ async function processEvents () {
   const events = removeUnwantedEvents(eventsFromLuckyDog)
   const knownEvents = await getKnownEvents()
   const newlyAddedOrChangedEvents = compareEvents(events, knownEvents)
-  const availableEvents = getUniqueEvents(knownEvents, newlyAddedOrChangedEvents)
+  const uniqueEvents = getUniqueEvents(knownEvents, newlyAddedOrChangedEvents)
+  const availableEvents = removeObsoleteEvents(uniqueEvents)
 
   const stats = {
     receivedAfterFilter: events.length,
