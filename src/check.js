@@ -4,7 +4,11 @@ const { sendEmail, initEmailService } = require('./email')
 
 async function check ({ shouldInitEmailService = true } = {}) {
   const { sendNotification, message } = await processEvents()
-  let sentInfo = ''
+  let sentInfo = JSON.stringify({
+    message: 'No email sent',
+    sendNotification,
+    shouldInitEmailService
+  })
 
   if (sendNotification && shouldInitEmailService) {
     initEmailService()
