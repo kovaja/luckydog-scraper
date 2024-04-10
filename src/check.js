@@ -4,11 +4,7 @@ const { sendEmail, initEmailService } = require('./email')
 
 async function check ({ shouldInitEmailService = true } = {}) {
   const { sendNotification, message } = await processEvents()
-  let sentInfo = {
-    message: 'No email sent',
-    sendNotification,
-    shouldInitEmailService
-  }
+  let sentInfo = ''
 
   if (sendNotification && shouldInitEmailService) {
     initEmailService()
@@ -22,6 +18,8 @@ async function check ({ shouldInitEmailService = true } = {}) {
       log('Send notification failed', e)
       sentInfo = e
     }
+  } else {
+    log('No notification sent')
   }
 
   return { sendNotification, sentInfo };
