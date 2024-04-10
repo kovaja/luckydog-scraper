@@ -15,6 +15,7 @@ async function check ({ shouldInitEmailService = true } = {}) {
     try {
       sentInfo = await sendEmail(message)
     } catch (e) {
+      log('Send notification failed', e)
       sentInfo = e
     }
   }
